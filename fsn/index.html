@@ -461,6 +461,16 @@ body.lang-en .zh-inline{display:none}
 <script>
 if('serviceWorker' in navigator && location.protocol!=='file:'){ addEventListener('load',function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); }); }
 </script>
+<style id="topbar-fix">
+.topbar{flex-wrap:nowrap}
+.topbar>.site-back{flex:0 0 auto}
+.topbar>.brand{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar>.userbar{flex:0 0 auto;flex-wrap:nowrap;white-space:nowrap;min-width:0}
+.userbar>*{flex:0 0 auto}
+.u-email{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar>.lang-toggle{flex:0 0 auto;white-space:nowrap}
+@media(max-width:520px){.topbar{gap:7px;padding:9px 10px}.topbar>.brand{font-size:14px}.u-email{max-width:78px}}
+</style>
 </head>
 <body>
 
@@ -2628,6 +2638,8 @@ function fsnHandleInbound(){
   try{
     var qs = new URLSearchParams(location.search);
     var from = qs.get('from');
+    var _goto = qs.get('goto');
+    if(_goto && /^mus-m\d+$/.test(_goto)){ setTimeout(function(){ try{ if(document.getElementById('page-'+_goto)){ (typeof go==='function'?go:showOnly)(_goto); } }catch(e){} }, 60); }
     var SRCMAP = {theory:'理论',pain:'疼痛',internal:'内科',formulas:'方药',points:'经穴',fsn:'浮针',ashi:'阿是穴'};
     // landing: someone linked INTO fsn -> floating back button
     if(from && SRCMAP[from]){
