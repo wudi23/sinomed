@@ -1253,7 +1253,8 @@ function linkify(text, selfId){
 }
 function linkifyPoints(text){ if(!text) return ''; return escapeHtml(text).replace(PT_CODE_RE, m=>ptLink(m.replace(/\s/g,''))); }
 function intLink(mid){ const g=(ASHI.axes.int_goto||{})[mid]||''; return g?('../internal/index.html?goto='+encodeURIComponent(g)+'&from=ashi'):'../internal/index.html?from=ashi'; }
-function fsnHref(){ return '../fsn/index.html?from=ashi'; }
+var ASHI_FSN_MAP={upper_trapezius:'m6',triceps_surae:'m42',brachioradialis:'m17',scm:'m4',scalenes:'m5',gluteus_medius:'m35',quadratus_lumborum:'m30',piriformis:'m33',gluteus_minimus:'m32',infraspinatus:'m10',supraspinatus:'m9',deltoid:'m14',erector_spinae:'m25',iliopsoas:'m31',rectus_abdominis:'m27',levator_scapulae:'m7',splenius:'m8',suboccipitals:'m3',temporalis:'m1',masseter:'m2',subscapularis:'m11',teres_minor:'m12',teres_major:'m13',rhomboids:'m24',pectoralis_major:'m20',pectoralis_minor:'m21',latissimus_dorsi:'m23',biceps_brachii:'m15',rectus_femoris:'m38',vastus_medialis:'m38',vastus_lateralis:'m38',hamstrings:'m40',adductors:'m36',tensor_fasciae_latae:'m37',sartorius:'m39',triceps_brachii:'m16',extensor_carpi_radialis:'m19',extensor_digitorum:'m19',pronator_teres:'m18',flexor_carpi:'m19',flexor_digitorum:'m19',tibialis_anterior:'m44',peroneus:'m46',tibialis_posterior:'m45',gluteus_maximus:'m34',deep_hip_rotators:'m33',serratus_anterior:'m22',obliques:'m28'};
+function fsnHref(mid){ var t=ASHI_FSN_MAP[mid]; return t?('../fsn/index.html?goto=mus-'+t+'&from=ashi'):''; }
 
 /* ============================================================ MUSCLE WALKTHROUGH (phase tabs — never stacked) ============================================================ */
 function openMuscle(id, opt){
@@ -1383,10 +1384,13 @@ function renderMuscle(m, recap){
 
   // ④ ADD-ON — condensed layers + per-muscle rehab
   h+=`<div class="mphase" id="mphase-addon">`;
+  var _fh=fsnHref(m.id);
+  if(_fh){
   h+=`<div class="step-lbl">${bi('可叠加的加治','Add-on layers')}</div>`;
   h+=`<div class="addon-links">`
-    +`<a class="tx-jump" href="${fsnHref()}" onclick="event.stopPropagation()">${bi('→ FSN 扫散（本肌为靶区）','→ FSN sweep (this muscle as target)')}</a>`
+    +`<a class="tx-jump" href="${_fh}" onclick="event.stopPropagation()">${bi('→ FSN 扫散（本肌为靶区）','→ FSN sweep (this muscle as target)')}</a>`
     +`</div>`;
+  }
   h+=`<div class="step-lbl">${bi('居家康复 · 可交病人','Home rehab — for the patient')}</div>`;
   h+=renderRehab(m);
   h+=`</div>`;
