@@ -2546,7 +2546,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){ addEventListene
       <span class="zh">此模块需要登录并凭浮针课程兑换码访问。请返回首页进行兑换。</span>
       <span class="en">This module requires login and a valid FSN course redemption code. Please return to the homepage to redeem.</span>
     </p>
-    <a href="../index.html" style="display:inline-block;padding:11px 24px;background:#1A6B5A;color:#fff;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;">
+    <a id="fsn-login-overlay-link" href="../index.html" style="display:inline-block;padding:11px 24px;background:#1A6B5A;color:#fff;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;">
       <span class="zh">← 返回首页</span><span class="en">← Back to SinoMed</span>
     </a>
   </div>
@@ -2639,7 +2639,7 @@ function fsnHandleInbound(){
     var qs = new URLSearchParams(location.search);
     var from = qs.get('from');
     var _goto = qs.get('goto');
-    if(_goto && /^mus-m\d+$/.test(_goto)){ setTimeout(function(){ try{ if(document.getElementById('page-'+_goto)){ (typeof go==='function'?go:showOnly)(_goto); } }catch(e){} }, 60); }
+    if(_goto && /^mus-[mx]\d+$/.test(_goto)){ setTimeout(function(){ try{ if(document.getElementById('page-'+_goto)){ (typeof go==='function'?go:showOnly)(_goto); } }catch(e){} }, 60); }
     var SRCMAP = {theory:'理论',pain:'疼痛',internal:'内科',formulas:'方药',points:'经穴',fsn:'浮针',ashi:'阿是穴'};
     // landing: someone linked INTO fsn -> floating back button
     if(from && SRCMAP[from]){
@@ -3632,7 +3632,10 @@ window._sb = _sb;
 (async function checkFSNAccess(){ if(location.protocol==='file:'||!_sb){ var _ov=document.getElementById('fsn-login-overlay'); if(_ov)_ov.style.display='none'; try{initQuizHero();}catch(e){} return; }
   const {data:{session}} = await _sb.auth.getSession();
   if(!session){
-    // Not logged in - show login overlay
+    // Not logged in - show login overlay; its link carries the deep link too,
+    // so signing in + redeeming lands back on this exact muscle page.
+    var _ov2 = document.getElementById('fsn-login-overlay-link');
+    if(_ov2) _ov2.href = '../index.html?fsn=1&next=' + encodeURIComponent(location.pathname + location.search);
     document.getElementById('fsn-login-overlay').style.display='flex';
     return;
   }
@@ -3642,8 +3645,12 @@ window._sb = _sb;
     .eq('module_id','fsn')
     .maybeSingle();
   if(!purchase){
-    // No access - redirect home
-    window.location.href='../index.html';
+    // No access - FSN is redeem-code-only, unlocked via the modal on the main site.
+    // Send the reader there with the exact page (goto=mus-XX&from=...) preserved as `next`,
+    // so redeeming (or an already-owned account) lands them back on this exact muscle —
+    // not just the module root.
+    var _next = encodeURIComponent(location.pathname + location.search);
+    window.location.href = '../index.html?fsn=1&next=' + _next;
     return;
   }
   // Has access - show content, init quiz hero
