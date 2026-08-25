@@ -861,14 +861,20 @@ function buyPass(){ if(PASS.live) startCheckout(PASS.module_id, PASS.price_id); 
 
 document.addEventListener('DOMContentLoaded', renderPricing);
 
-/* Arrived from a module's buy/login redirect: auto-open sign-in, remember return path */
+/* Arrived from a module's buy/login redirect: auto-open sign-in, remember return path.
+   Also handle ?fsn=1 (sent by the FSN module when a logged-in reader lacks FSN access) —
+   auto-opens the FSN redeem modal instead of the sign-in modal.
+   `next` may now include a query string (e.g. /fsn/?goto=mus-m6&from=ashi) so the reader
+   can land back on the exact page — not just the module root — once unlocked. */
 document.addEventListener('DOMContentLoaded', function(){
   try{
     var p = new URLSearchParams(window.location.search);
+    var nx = p.get('next') || '';
+    if(/^\/[a-z0-9_\-]+\/(?:\?[a-zA-Z0-9_=&%.\-]*)?$/i.test(nx)) window.__loginNext = nx;
     if(p.get('login') === '1'){
-      var nx = p.get('next') || '';
-      if(/^\/[a-z0-9_\-]+\/?$/i.test(nx)) window.__loginNext = nx;
       openModal();
+    } else if(p.get('fsn') === '1'){
+      openFSNModal();
     }
   }catch(e){}
 });
@@ -897,8 +903,8 @@ function openFSNModal(){
         .eq('module_id', 'fsn')
         .maybeSingle();
       if(purchase){
-        // Already has access — go directly to FSN
-        window.location.href = '/fsn/';
+        // Already has access — go directly to FSN (honour a pending deep link if present)
+        window.location.href = window.__loginNext || '/fsn/';
         return;
       }
       // Logged in but no access — show redeem section
@@ -945,7 +951,7 @@ async function redeemFSNCode(){
     if(result.success){
       msg.innerHTML='<span class="t-en">✓ Access granted! Redirecting…</span><span class="t-zh">✓ 已解锁！跳转中…</span>';
       msg.className='mmsg ok';
-      setTimeout(()=>{ window.location.href='/fsn/'; }, 1200);
+      setTimeout(()=>{ window.location.href = window.__loginNext || '/fsn/'; }, 1200);
     } else {
       msg.textContent = result.error || 'Invalid code.';
       msg.className='mmsg err';
