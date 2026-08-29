@@ -452,31 +452,12 @@ body.lang-en .zh-inline{display:none}
 .dx-group-label{font-weight:700;color:var(--teal);font-size:14px;margin:14px 0 8px;padding-bottom:5px;border-bottom:2px solid var(--cream-dk)}
 .dx-group-label .en,.dx-group-label .zh{}
 </style>
-<link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#7a4a2b">
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="SinoMed">
-<script>
-if('serviceWorker' in navigator && location.protocol!=='file:'){ addEventListener('load',function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); }); }
-</script>
-<style id="topbar-fix">
-.topbar{flex-wrap:nowrap}
-.topbar>.site-back{flex:0 0 auto}
-.topbar>.brand{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.topbar>.userbar{flex:0 0 auto;flex-wrap:nowrap;white-space:nowrap;min-width:0}
-.userbar>*{flex:0 0 auto}
-.u-email{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.topbar>.lang-toggle{flex:0 0 auto;white-space:nowrap}
-@media(max-width:520px){.topbar{gap:7px;padding:9px 10px}.topbar>.brand{font-size:14px}.u-email{max-width:78px}}
-</style>
 </head>
 <body>
 
 <!-- ══════════ TOPBAR (updateUserBar standard) ══════════ -->
 <div class="topbar">
-  <a class="site-back" href="../index.html" title="SinoMed" aria-label="Back to SinoMed">←&nbsp;SinoMed</a>
+  <a class="site-back" href="/" title="SinoMed" aria-label="Back to SinoMed">←&nbsp;SinoMed</a>
   <div class="brand" onclick="goTop('home')" style="cursor:pointer">
     <span class="zh">浮针临床速查手册</span><span class="en">FSN Clinical Quick Reference</span>
   </div>
@@ -2211,21 +2192,6 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){ addEventListene
 .badge-warn,.fsn-content .badge-warn{background:#FBE8E6;color:#8E1F1F;border-color:#EEC1BB}
 
 .en,.en-inline{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
-
-/* ★手机版顶栏合理化★ */
-.topbar .brand{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto}
-.topbar .site-back,.topbar .userbar,.topbar .lang-toggle{flex:0 0 auto}
-@media(max-width:560px){
-  .topbar{gap:6px;padding:8px 10px}
-  .topbar .brand{font-size:13px}
-  .topbar .site-back{font-size:12px}
-  .topbar .userbar{font-size:11px;max-width:92px;overflow:hidden}
-  .topbar .userbar *{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:84px}
-}
-@media(max-width:380px){
-  .topbar .brand{display:none}
-}
-
 </style>
 
 <div class="qr-group">
@@ -2546,7 +2512,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){ addEventListene
       <span class="zh">此模块需要登录并凭浮针课程兑换码访问。请返回首页进行兑换。</span>
       <span class="en">This module requires login and a valid FSN course redemption code. Please return to the homepage to redeem.</span>
     </p>
-    <a id="fsn-login-overlay-link" href="../index.html" style="display:inline-block;padding:11px 24px;background:#1A6B5A;color:#fff;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;">
+    <a href="/" style="display:inline-block;padding:11px 24px;background:#1A6B5A;color:#fff;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;">
       <span class="zh">← 返回首页</span><span class="en">← Back to SinoMed</span>
     </a>
   </div>
@@ -2622,13 +2588,13 @@ function updateUserBar(){
       bar.innerHTML = '<span class="u-email" title="'+email+'">'+email+'</span>'
         + '<button onclick="fsnLogout()">'+biI('退出','Log out')+'</button>';
     } else {
-      bar.innerHTML = '<a class="u-btn" href="../index.html">'+biI('登录','Log in')+'</a>';
+      bar.innerHTML = '<a class="u-btn" href="/">'+biI('登录','Log in')+'</a>';
     }
   });
 }
 function fsnLogout(){
-  if(window._sb){ window._sb.auth.signOut().finally(function(){ window.location.href='../index.html'; }); }
-  else { window.location.href='../index.html'; }
+  if(window._sb){ window._sb.auth.signOut().finally(function(){ window.location.href='/'; }); }
+  else { window.location.href='/'; }
 }
 
 /* ══════════ BOOT ══════════ */
@@ -2638,8 +2604,6 @@ function fsnHandleInbound(){
   try{
     var qs = new URLSearchParams(location.search);
     var from = qs.get('from');
-    var _goto = qs.get('goto');
-    if(_goto && /^mus-[mx]\d+$/.test(_goto)){ setTimeout(function(){ try{ if(document.getElementById('page-'+_goto)){ (typeof go==='function'?go:showOnly)(_goto); } }catch(e){} }, 60); }
     var SRCMAP = {theory:'理论',pain:'疼痛',internal:'内科',formulas:'方药',points:'经穴',fsn:'浮针',ashi:'阿是穴'};
     // landing: someone linked INTO fsn -> floating back button
     if(from && SRCMAP[from]){
@@ -2648,7 +2612,7 @@ function fsnHandleInbound(){
         document.body.appendChild(b); }
       b.innerHTML = '<span class="zh">\u2190 \u8fd4\u56de'+SRCMAP[from]+'</span><span class="en">\u2190 Back to '+from+'</span>';
       var back = qs.get('back')||'';
-      b.onclick=function(){ try{ if(history.length>1){ history.back(); return; } }catch(e){} location.href='../'+from+'/index.html'+(back?('#'+back):''); };
+      b.onclick=function(){ location.href='/'+from+'/#'+back; };
       b.style.display='block';
     }
     // restore: returning to fsn with #pageId
@@ -3488,12 +3452,48 @@ async function showQuizResult(autoSubmit){
   qShowResultContent(autoSubmit);
 }
 
+/* ===== FSN quiz results -> Supabase table + optional email (Order #02) ===== */
+window.FSN_RESULT_EMAIL_KEY = 'a4d5363d-60a3-49e0-9f66-a65733046dc6';  /* <-- paste Web3Forms access key for info@cafsn.com to enable email */
+async function fsnRecordResult(score, total, pct, passed, certNo){
+  try{
+    var sess = await getSinomedSession();
+    if(!sess || !sess.user) return;
+    var email = sess.user.email || '';
+    var name = (window.Q_CERT_NAME || '');
+    var payload = { user_id: sess.user.id, email: email, name: name,
+      score: score, total: total, pct: pct, passed: !!passed,
+      cert_no: passed ? (certNo||'') : null, attempt_at: new Date().toISOString() };
+    /* (1) durable record — source of truth */
+    if(window._sb){ try{ await window._sb.from('fsn_quiz_results').insert(payload); }catch(e){} }
+    /* (2) email notification to info@cafsn.com (only if a Web3Forms key is set) */
+    if(window.FSN_RESULT_EMAIL_KEY){
+      try{
+        await fetch('https://api.web3forms.com/submit', { method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            access_key: window.FSN_RESULT_EMAIL_KEY,
+            subject: 'FSN \u6d4b\u9a8c\u7ed3\u679c\uff1a'+email+' \u2014 '+(passed?'\u901a\u8fc7 PASS':'\u672a\u901a\u8fc7 FAIL')+' ('+score+'/'+total+')',
+            from_name: 'SinoMed FSN',
+            email: 'info@cafsn.com',
+            message: '\u5b66\u5458 Student: '+(name?name+' <'+email+'>':email)
+              +'\n\u6210\u7ee9 Score: '+score+'/'+total+' ('+pct+'%)'
+              +'\n\u7ed3\u679c Result: '+(passed?'\u901a\u8fc7 PASS':'\u672a\u901a\u8fc7 FAIL')
+              +'\n\u8bc1\u4e66\u53f7 Cert: '+(passed?(certNo||'-'):'-')
+              +'\n\u65f6\u95f4 Time: '+payload.attempt_at
+          })
+        });
+      }catch(e){}
+    }
+  }catch(e){}
+}
+
 async function qShowResultContent(autoSubmit){
   const area = document.getElementById('quiz-area');
   const score=QS.score, tot=QS.q.length, pct=Math.round((score/tot)*100), passed=pct>=70;
   const zh=isZh(), r=qGetR(), now=Date.now();
   Q_CERT_NO='FSN-'+new Date().getFullYear()+'-'+Math.random().toString(36).substr(2,8).toUpperCase();
   Q_CERT_PCT=pct;
+  fsnRecordResult(score, tot, pct, passed, Q_CERT_NO);
 
   if(passed){
     qSaveR({...r, passed:true, passDate:new Date().toISOString(), certNo:Q_CERT_NO, passPct:pct});
@@ -3626,16 +3626,13 @@ function makeFSNCertWithName(name, dateObj){
 
 
 /* ── Supabase Init & FSN Access Check ── */
-const _sb = (typeof supabase==='undefined') ? null : supabase.createClient('https://ucocgcbxdqjbbklnkyxt.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb2NnY2J4ZHFqYmJrbG5reXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MzE0ODksImV4cCI6MjA5ODQwNzQ4OX0.gpzg7Gp8r7vFjMBJMzYjvXb6TZPWt_Jp3VVBpm-tnEo');
+const _sb = supabase.createClient('https://ucocgcbxdqjbbklnkyxt.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjb2NnY2J4ZHFqYmJrbG5reXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MzE0ODksImV4cCI6MjA5ODQwNzQ4OX0.gpzg7Gp8r7vFjMBJMzYjvXb6TZPWt_Jp3VVBpm-tnEo');
 window._sb = _sb;
 
-(async function checkFSNAccess(){ if(location.protocol==='file:'||!_sb){ var _ov=document.getElementById('fsn-login-overlay'); if(_ov)_ov.style.display='none'; try{initQuizHero();}catch(e){} return; }
+(async function checkFSNAccess(){
   const {data:{session}} = await _sb.auth.getSession();
   if(!session){
-    // Not logged in - show login overlay; its link carries the deep link too,
-    // so signing in + redeeming lands back on this exact muscle page.
-    var _ov2 = document.getElementById('fsn-login-overlay-link');
-    if(_ov2) _ov2.href = '../index.html?fsn=1&next=' + encodeURIComponent(location.pathname + location.search);
+    // Not logged in - show login overlay
     document.getElementById('fsn-login-overlay').style.display='flex';
     return;
   }
@@ -3645,12 +3642,8 @@ window._sb = _sb;
     .eq('module_id','fsn')
     .maybeSingle();
   if(!purchase){
-    // No access - FSN is redeem-code-only, unlocked via the modal on the main site.
-    // Send the reader there with the exact page (goto=mus-XX&from=...) preserved as `next`,
-    // so redeeming (or an already-owned account) lands them back on this exact muscle —
-    // not just the module root.
-    var _next = encodeURIComponent(location.pathname + location.search);
-    window.location.href = '../index.html?fsn=1&next=' + _next;
+    // No access - redirect home
+    window.location.href='/';
     return;
   }
   // Has access - show content, init quiz hero
@@ -3907,21 +3900,5 @@ window.addEventListener('storage', function(e){
 
 </script>
 
-<!-- SINOMED_XMOD_BACK: 全站统一 跨模块原路返回悬浮按钮 -->
-<button id="xmodBack" onclick="__xmodBack&&__xmodBack()" style="display:none;position:fixed;left:16px;bottom:20px;z-index:70;font-family:inherit;font-size:14px;background:#7a4a2b;color:#fff;border:none;border-radius:22px;padding:10px 18px;cursor:pointer;box-shadow:0 3px 12px rgba(46,38,24,.28)">&#8592; Back</button>
-<script>
-(function(){
-  var NM={symptoms:['\u75c7\u72b6\u6c14\u673a\u63a8\u7406','Symptom Reasoning'],internal:['\u5185\u79d1\u7cfb\u7edf','Internal Medicine'],points:['\u7ecf\u7a74','Meridians & Points'],formulas:['\u65b9\u836f','Formulas'],ashi:['\u963f\u662f\u7a74','Ashi Points'],pain:['\u75bc\u75db','Pain'],fsn:['\u6d6e\u9488','FSN'],theory:['\u57fa\u7840\u7406\u8bba','Theory']};
-  function keyOf(p){ var f=(p||'').split('/').filter(Boolean)[0]||''; return NM[f]?f:''; }
-  var from='';
-  try{ var q=new URLSearchParams(location.search); var qf=q.get('from'); if(qf&&NM[qf]) from=qf; }catch(e){}
-  if(!from){ try{ if(document.referrer){ var r=new URL(document.referrer); if(r.origin===location.origin){ var k=keyOf(r.pathname); if(k&&k!==keyOf(location.pathname)) from=k; } } }catch(e){} }
-  window.__xmodBack=function(){ try{ if(history.length>1){ history.back(); return; } }catch(e){} var qb='';try{qb=new URLSearchParams(location.search).get('back')||'';}catch(e){} location.href = from?('../'+from+'/index.html'+(qb?('#'+qb):'')):'../index.html'; };
-  if(!from) return;
-  function draw(){ var b=document.getElementById('xmodBack'); if(!b) return; var en=false; try{ en=(document.documentElement.getAttribute('data-lang')==='en')||(localStorage.getItem('sinomed-lang')==='en'); }catch(e){} b.textContent=en?('\u2190 Back to '+NM[from][1]):('\u2190 \u8fd4\u56de'+NM[from][0]); b.style.display='block'; }
-  function boot(){ draw(); try{ new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-lang']}); }catch(e){} }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
-})();
-</script>
 </body>
 </html>
