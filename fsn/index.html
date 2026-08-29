@@ -3276,6 +3276,7 @@ function isZh(){ return !document.body.classList.contains('lang-en'); }
 
 function initQuizHero(){
   const r = qGetR(), now = Date.now();
+  if(!r.passed && !window.__fsnHydrated){ window.__fsnHydrated=true; fsnHydratePassFromServer().then(function(did){ if(did) initQuizHero(); }); }
   const sub = document.getElementById('qhero-sub');
   const btn = document.getElementById('qstart-btn');
   const rdb = document.getElementById('qredown-box');
@@ -3566,6 +3567,27 @@ async function doRedownload(){
   makeFSNCertWithName(name, r.passDate?new Date(r.passDate):new Date());
 }
 
+/* ===== cert archive: auto-upload to Supabase Storage + server-backed re-download ===== */
+async function fsnUploadCert(blob, name){
+  try{
+    var sess = await getSinomedSession(); if(!sess || !sess.user || !blob || !window._sb) return;
+    var safe = (name||'').replace(/[^\w\u4e00-\u9fff -]/g,'').replace(/ /g,'-') || 'unnamed';
+    var path = sess.user.id + '/' + safe + '-' + (Q_CERT_NO || 'cert') + '.pdf';
+    await window._sb.storage.from('fsn-certificates').upload(path, blob, {contentType:'application/pdf', upsert:true});
+  }catch(e){}
+}
+async function fsnHydratePassFromServer(){
+  try{
+    var sess = await getSinomedSession(); if(!sess || !sess.user || !window._sb) return false;
+    var r = qGetR(); if(r.passed) return false;
+    var res = await window._sb.from('fsn_quiz_results')
+      .select('cert_no,pct,attempt_at').eq('user_id',sess.user.id).eq('passed',true)
+      .order('attempt_at',{ascending:false}).limit(1).maybeSingle();
+    var d = res && res.data;
+    if(d){ qSaveR({...r, passed:true, certNo:d.cert_no, passPct:d.pct, passDate:d.attempt_at}); return true; }
+  }catch(e){}
+  return false;
+}
 async function makeFSNCert(){
   const nameEl=document.getElementById('qcname');
   const name=(nameEl?nameEl.value:'').trim();
@@ -3621,6 +3643,7 @@ function makeFSNCertWithName(name, dateObj){
   doc.text(today,W/2,183,{align:'center'});
   doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(138,134,124);
   doc.text('Issued in collaboration with SinoMed Clinical Reference System  ·  sinomed.ca',W/2,H-7,{align:'center'});
+  try{ fsnUploadCert(doc.output('blob'), name); }catch(e){}
   doc.save('FSNAC-Certificate-'+name.replace(/ /g,'-')+'.pdf');
 }
 
