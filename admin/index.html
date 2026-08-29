@@ -26,9 +26,13 @@
   h2{font-size:18px; margin:28px 0 12px; color:var(--accent);}
   .card{background:#fff; border:1px solid var(--line); border-radius:10px; padding:20px; margin-bottom:16px;}
   label{display:block; font-size:13px; color:#6b6252; margin:12px 0 4px;}
-  input[type=email], input[type=password], input[type=date], select{
+  input[type=email], input[type=password], input[type=date], input[type=text], select{
     width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px;
     font-size:15px; background:#fff; color:var(--ink);}
+  .filter-bar{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;}
+  .filter-bar input[type=text]{flex:2; min-width:160px;}
+  .filter-bar select{flex:1; min-width:110px;}
+  .filter-count{font-size:13px; color:#8b8272; margin:0 0 10px;}
   .btn{display:inline-block; padding:10px 22px; border-radius:8px; border:none;
     background:var(--gold); color:#fff; font-size:15px; cursor:pointer; margin-top:16px;}
   .btn:disabled{opacity:.5; cursor:not-allowed;}
@@ -142,6 +146,28 @@
 
     <div class="card">
       <h2 style="margin-top:0">已授权 / 已购买记录</h2>
+      <div class="filter-bar">
+        <input type="text" id="searchEmail" placeholder="搜索邮箱…">
+        <select id="filterModule">
+          <option value="">全部模块</option>
+          <option value="pain">疼痛</option>
+          <option value="ashi">阿是/MTrP</option>
+          <option value="internal">内科</option>
+          <option value="fsn">浮针</option>
+          <option value="allaccess">全站通</option>
+        </select>
+        <select id="filterSource">
+          <option value="">全部来源</option>
+          <option value="stripe">Stripe购买</option>
+          <option value="admin">管理员授权</option>
+        </select>
+        <select id="filterStatus">
+          <option value="">全部状态</option>
+          <option value="active">生效中</option>
+          <option value="expired">已过期</option>
+        </select>
+      </div>
+      <div class="filter-count" id="filterCount"></div>
       <div class="tbl-wrap">
         <table>
           <thead>
@@ -171,6 +197,7 @@ var MODULE_NAMES = {
   pain: "疼痛", ashi: "阿是/MTrP", internal: "内科",
   fsn: "浮针", allaccess: "全站通", theory: "理论", formulas: "方药"
 };
+var allRows = [];  // 最近一次从服务端拉取的完整记录，筛选在此基础上做纯前端过滤，不重新请求
 
 /* ================= 工具 ================= */
 function $(id){ return document.getElementById(id); }
@@ -246,8 +273,9 @@ async function enterAdmin(){
   $("pageLogin").classList.add("hidden");
   $("pageAdmin").classList.remove("hidden");
   $("btnLogout").classList.remove("hidden");
-  renderTable(r.data.rows || []);
-  renderDashboard(r.data.rows || [], r.data.user_stats || null);
+  allRows = r.data.rows || [];
+  renderDashboard(allRows, r.data.user_stats || null);
+  applyFilters();
 }
 
 /* ================= 销售仪表盘 ================= */
@@ -336,6 +364,47 @@ $("modRank").addEventListener("click", function(ev){
   if (panel) panel.classList.toggle("open");
 });
 
+/* ================= 筛选 ================= */
+function applyFilters(){
+  var q = $("searchEmail").value.trim().toLowerCase();
+  var fm = $("filterModule").value;
+  var fs = $("filterSource").value;
+  var fst = $("filterStatus").value;
+  var now = new Date().toISOString();
+
+  var filtered = allRows.filter(function(r){
+    if (q) {
+      var email = String(r.email || r.user_id || "").toLowerCase();
+      if (email.indexOf(q) === -1) return false;
+    }
+    if (fm && r.module_id !== fm) return false;
+    if (fs) {
+      var isAdmin = r.price_id === "admin_grant";
+      if (fs === "admin" && !isAdmin) return false;
+      if (fs === "stripe" && isAdmin) return false;
+    }
+    if (fst) {
+      var expired = !!(r.expires_at && r.expires_at <= now);
+      if (fst === "expired" && !expired) return false;
+      if (fst === "active" && expired) return false;
+    }
+    return true;
+  });
+
+  renderTable(filtered);
+  var n = allRows.length;
+  $("filterCount").textContent = (q || fm || fs || fst)
+    ? ("筛选出 " + filtered.length + " / " + n + " 条记录")
+    : ("共 " + n + " 条记录");
+}
+
+["searchEmail"].forEach(function(id){
+  $(id).addEventListener("input", applyFilters);
+});
+["filterModule", "filterSource", "filterStatus"].forEach(function(id){
+  $(id).addEventListener("change", applyFilters);
+});
+
 /* ================= 列表渲染 ================= */
 function renderTable(rows){
   var tb = $("tblBody");
@@ -376,8 +445,9 @@ function renderTable(rows){
 async function refreshList(){
   var r = await callApi({ action: "list" });
   if (r.status === 200) {
-    renderTable(r.data.rows || []);
-    renderDashboard(r.data.rows || [], r.data.user_stats || null);
+    allRows = r.data.rows || [];
+    renderDashboard(allRows, r.data.user_stats || null);
+    applyFilters();
   }
 }
 
