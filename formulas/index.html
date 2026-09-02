@@ -319,10 +319,10 @@ details.cat-block:hover{z-index:5}
 .cidx-t{font-size:17px;font-weight:700;color:var(--jade-d);margin-bottom:8px;}
 .cidx-sub{font-size:13px;color:var(--sub);margin-bottom:12px;line-height:1.75;}
 .cidx-note{font-size:12.5px;color:var(--jade-d);background:var(--jade-l);border-radius:8px;padding:10px 13px;margin-bottom:16px;line-height:1.7;}
-.ci-row{display:flex;align-items:center;gap:10px;padding:12px 8px;border-bottom:1px solid var(--line);cursor:pointer;}
+.ci-row{display:grid;grid-template-columns:auto minmax(96px,auto) 1fr auto auto;align-items:center;column-gap:10px;row-gap:2px;padding:12px 8px;border-bottom:1px solid var(--line);cursor:pointer;}
 .ci-row:hover{background:var(--jade-l);}
-.ci-name{font-weight:700;color:var(--ink);min-width:118px;}
-.ci-tag{flex:1;font-size:13px;color:var(--sub);}
+.ci-name{font-weight:700;color:var(--ink);white-space:nowrap;}
+.ci-tag{font-size:13px;color:var(--sub);}
 .ci-badge{font-size:12px;background:var(--jade-l);color:var(--jade-d);border-radius:20px;padding:2px 10px;white-space:nowrap;}
 .ci-go{color:var(--jade);font-size:18px;}
 
@@ -330,6 +330,16 @@ details.cat-block:hover{z-index:5}
 .entry-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
 .entry-grid .quiz-entry{margin:0;height:100%;}
 @media(max-width:640px){.entry-grid{grid-template-columns:1fr;}}
+
+/* case index rows: single line on desktop, two lines on mobile */
+@media(max-width:640px){
+ .ci-row{grid-template-columns:auto 1fr auto;}
+ .ci-row .jf-badge.sm{grid-row:1;grid-column:1;}
+ .ci-row .ci-name{grid-row:1;grid-column:2;}
+ .ci-row .ci-badge{grid-row:1;grid-column:3;justify-self:end;}
+ .ci-row .ci-go{grid-row:1;grid-column:3;display:none;}
+ .ci-row .ci-tag{grid-row:2;grid-column:1 / -1;padding-top:2px;line-height:1.6;}
+}
 </style>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#7a4a2b">
