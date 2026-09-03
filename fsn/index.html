@@ -2378,6 +2378,10 @@ body.lang-en .zh-inline{display:none}
     <div class="q-ico">📝</div>
     <h2><span class="zh">FSN 认证测验</span><span class="en">FSN Assessment Quiz</span></h2>
     <div id="qhero-sub"></div>
+    <div class="qhero-namewrap" style="margin:0 auto 14px;max-width:340px;text-align:left">
+      <label style="display:block;font-size:13px;color:var(--steel);margin-bottom:4px"><span class="zh">姓名（将印在证书上，请填英文全名）</span><span class="en">Full name (as it will appear on your certificate)</span></label>
+      <input type="text" id="qhero-name" placeholder="e.g. Jane Smith" style="width:100%;padding:9px 12px;border:1px solid var(--border-old);border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box">
+    </div>
     <button class="q-start-btn" id="qstart-btn" onclick="checkAndStartQuiz()">
       <span class="zh">开始测验</span><span class="en">Start Assessment</span>
     </button>
@@ -3310,11 +3314,17 @@ async function loadProfileName(){
     if(data && data.display_name){
       const inp = document.getElementById('qredown-name');
       if(inp) inp.value = data.display_name;
+      const hn = document.getElementById('qhero-name');
+      if(hn && !hn.value) hn.value = data.display_name;
     }
   }catch(e){}
 }
 
 function checkAndStartQuiz(){
+  var _nm = ((document.getElementById('qhero-name')||{}).value||'').trim();
+  if(!_nm){ alert(isZh()?'请先填写姓名（将印在证书上）':'Please enter your name (it will appear on your certificate) first'); var _e=document.getElementById('qhero-name'); if(_e) _e.focus(); return; }
+  window.Q_CERT_NAME = _nm;
+  try{ if(window._sb){ window._sb.auth.getSession().then(function(s){ if(s&&s.data&&s.data.session) window._sb.from('profiles').upsert({id:s.data.session.user.id,display_name:_nm},{onConflict:'id'}); }); } }catch(e){}
   const r = qGetR(), now = Date.now();
   if(r.cooldownUntil && now < r.cooldownUntil) return;
   if((r.attempts||0) >= Q_MAX) qSaveR({...r, attempts:0, cooldownUntil:null});
@@ -3467,7 +3477,7 @@ async function fsnRecordResult(score, total, pct, passed, certNo){
     /* (1) durable record — source of truth */
     if(window._sb){ try{ await window._sb.from('fsn_quiz_results').insert(payload); }catch(e){} }
     /* (2) email notification to info@cafsn.com (only if a Web3Forms key is set) */
-    if(window.FSN_RESULT_EMAIL_KEY){
+    if(window.FSN_RESULT_EMAIL_KEY && !passed){
       try{
         await fetch('https://api.web3forms.com/submit', { method:'POST',
           headers:{'Content-Type':'application/json'},
@@ -3526,7 +3536,7 @@ async function qShowResultContent(autoSubmit){
       : failMsg)+'</div>';
   if(passed){
     html+='<div class="cert-box"><label>'+(zh?'姓名（用于证书）':'Full name for certificate')+'</label>'
-      +'<input type="text" id="qcname" placeholder="e.g. Jane Smith">'
+      +'<input type="text" id="qcname" placeholder="e.g. Jane Smith" value="'+(window.Q_CERT_NAME||'').replace(/"/g,'&quot;')+'">'
       +'<button class="cert-btn" id="qcert-btn">'+(zh?'⬇ 下载FSNAC认证证书 (PDF)':'⬇ Download FSNAC Certificate (PDF)')+'</button></div>';
   }
   if(!passed && !inCD && rem > 0){
@@ -3564,6 +3574,7 @@ async function doRedownload(){
   const r=qGetR();
   Q_CERT_NO=r.certNo||'FSN-REISSUED';
   Q_CERT_PCT=r.passPct||70;
+  window.__certNotify=false;
   makeFSNCertWithName(name, r.passDate?new Date(r.passDate):new Date());
 }
 
@@ -3574,6 +3585,31 @@ async function fsnUploadCert(blob, name){
     var safe = (name||'').replace(/[^\w\u4e00-\u9fff -]/g,'').replace(/ /g,'-') || 'unnamed';
     var path = sess.user.id + '/' + safe + '-' + (Q_CERT_NO || 'cert') + '.pdf';
     await window._sb.storage.from('fsn-certificates').upload(path, blob, {contentType:'application/pdf', upsert:true});
+    /* long-lived signed download link for the association's records */
+    var link = '';
+    try{ var sg = await window._sb.storage.from('fsn-certificates').createSignedUrl(path, 315360000);
+         link = (sg && sg.data && sg.data.signedUrl) || ''; }catch(e){}
+    /* notify info@cafsn.com WITH download link — only on the initial pass, not on re-downloads */
+    if(window.FSN_RESULT_EMAIL_KEY && window.__certNotify){
+      try{
+        await fetch('https://api.web3forms.com/submit', { method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            access_key: window.FSN_RESULT_EMAIL_KEY,
+            subject: 'FSN \u8bc1\u4e66\u5df2\u751f\u6210\uff1a'+(name||sess.user.email)+' \u2014 \u901a\u8fc7 PASS ('+(Q_CERT_PCT||'')+'%)',
+            from_name: 'SinoMed FSN',
+            email: 'info@cafsn.com',
+            message: '\u5b66\u5458 Student: '+(name?name+' <'+sess.user.email+'>':sess.user.email)
+              +'\n\u6210\u7ee9 Score: '+(Q_CERT_PCT||'')+'%'
+              +'\n\u7ed3\u679c Result: \u901a\u8fc7 PASS'
+              +'\n\u8bc1\u4e66\u53f7 Cert: '+(Q_CERT_NO||'-')
+              +'\n\u4e0b\u8f7d\u8bc1\u4e66 Download certificate:\n'+(link||'(\u94fe\u63a5\u751f\u6210\u5931\u8d25\uff0c\u8bf7\u5230 Supabase Storage \u540e\u53f0\u67e5\u770b\u8be5\u5b66\u5458\u6587\u4ef6\u5939)')
+              +'\n\u65f6\u95f4 Time: '+new Date().toISOString()
+          })
+        });
+      }catch(e){}
+    }
+    window.__certNotify=false;
   }catch(e){}
 }
 async function fsnHydratePassFromServer(){
@@ -3597,13 +3633,14 @@ async function makeFSNCert(){
     const {data:{session}}=await window._sb.auth.getSession();
     if(session) await window._sb.from('profiles').upsert({id:session.user.id,display_name:name},{onConflict:'id'});
   }catch(e){}
+  window.__certNotify=true;
   makeFSNCertWithName(name, new Date());
 }
 
 function makeFSNCertWithName(name, dateObj){
   const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
-  const W=297,H=210;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'letter'});
+  const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight();
   doc.setFillColor(255,255,255);doc.rect(0,0,W,H,'F');
   doc.setFillColor(248,245,240);doc.rect(0,0,W,18,'F');doc.rect(0,H-18,W,18,'F');
   doc.setFillColor(139,26,26);doc.rect(0,0,W,5,'F');doc.rect(0,H-5,W,5,'F');
@@ -3630,14 +3667,14 @@ function makeFSNCertWithName(name, dateObj){
   doc.text('Score:   '+Q_CERT_PCT+'%',W/2,115,{align:'center'});
   try{doc.addImage(FSNAC_SEAL,'PNG',W/2-22,121,44,44);}catch(e){}
   doc.setDrawColor(108,105,98);doc.setLineWidth(.3);
-  doc.line(24,174,102,174);doc.line(195,174,273,174);
+  doc.line(24,174,102,174);doc.line(W-102,174,W-24,174);
   try{doc.addImage(WU_SIG,'JPEG',36,153,40,18);}catch(e){}
-  try{doc.addImage(FU_SIG,'PNG',207,154,38,16);}catch(e){}
+  try{doc.addImage(FU_SIG,'PNG',W-90,154,38,16);}catch(e){}
   doc.setFontSize(8.5);doc.setFont('helvetica','normal');doc.setTextColor(62,59,54);
   doc.text('Instructor: Wu Di',63,179,{align:'center'});
   doc.text('President of FSNAC',63,185,{align:'center'});
-  doc.text('Dr. Fu Zhonghua',234,179,{align:'center'});
-  doc.text('Honorary Chair of FSNAC',234,185,{align:'center'});
+  doc.text('Dr. Fu Zhonghua',W-63,179,{align:'center'});
+  doc.text('Honorary Chair of FSNAC',W-63,185,{align:'center'});
   const today=dateObj.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(42,40,36);
   doc.text(today,W/2,183,{align:'center'});
