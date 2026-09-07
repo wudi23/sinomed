@@ -3464,7 +3464,9 @@ async function showQuizResult(autoSubmit){
 }
 
 /* ===== FSN quiz results -> Supabase table + optional email (Order #02) ===== */
-window.FSN_RESULT_EMAIL_KEY = 'a4d5363d-60a3-49e0-9f66-a65733046dc6';  /* <-- paste Web3Forms access key for info@cafsn.com to enable email */
+window.FSN_RESULT_EMAIL_KEY = 'a4d5363d-60a3-49e0-9f66-a65733046dc6';
+/* notification recipients — each key = one mailbox; sent as SEPARATE emails (recipients can't see each other) */
+window.FSN_RESULT_EMAIL_KEYS = ['a4d5363d-60a3-49e0-9f66-a65733046dc6','b6ad1c0d-1ab0-41e4-ab80-bcaab4d7e1fd'];  /* <-- paste Web3Forms access key for info@cafsn.com to enable email */
 async function fsnRecordResult(score, total, pct, passed, certNo){
   try{
     var sess = await getSinomedSession();
@@ -3477,12 +3479,13 @@ async function fsnRecordResult(score, total, pct, passed, certNo){
     /* (1) durable record — source of truth */
     if(window._sb){ try{ await window._sb.from('fsn_quiz_results').insert(payload); }catch(e){} }
     /* (2) email notification to info@cafsn.com (only if a Web3Forms key is set) */
-    if(window.FSN_RESULT_EMAIL_KEY && !passed){
-      try{
+    if(window.FSN_RESULT_EMAIL_KEYS && window.FSN_RESULT_EMAIL_KEYS.length && !passed){
+      for(var _k=0;_k<window.FSN_RESULT_EMAIL_KEYS.length;_k++){
+        try{
         await fetch('https://api.web3forms.com/submit', { method:'POST',
           headers:{'Content-Type':'application/json'},
           body: JSON.stringify({
-            access_key: window.FSN_RESULT_EMAIL_KEY,
+            access_key: window.FSN_RESULT_EMAIL_KEYS[_k],
             subject: 'FSN \u6d4b\u9a8c\u7ed3\u679c\uff1a'+email+' \u2014 '+(passed?'\u901a\u8fc7 PASS':'\u672a\u901a\u8fc7 FAIL')+' ('+score+'/'+total+')',
             from_name: 'SinoMed FSN',
             email: 'info@cafsn.com',
@@ -3494,6 +3497,7 @@ async function fsnRecordResult(score, total, pct, passed, certNo){
           })
         });
       }catch(e){}
+      }
     }
   }catch(e){}
 }
@@ -3590,12 +3594,13 @@ async function fsnUploadCert(blob, name){
     try{ var sg = await window._sb.storage.from('fsn-certificates').createSignedUrl(path, 315360000);
          link = (sg && sg.data && sg.data.signedUrl) || ''; }catch(e){}
     /* notify info@cafsn.com WITH download link — only on the initial pass, not on re-downloads */
-    if(window.FSN_RESULT_EMAIL_KEY && window.__certNotify){
-      try{
+    if(window.FSN_RESULT_EMAIL_KEYS && window.FSN_RESULT_EMAIL_KEYS.length && window.__certNotify){
+      for(var _k=0;_k<window.FSN_RESULT_EMAIL_KEYS.length;_k++){
+        try{
         await fetch('https://api.web3forms.com/submit', { method:'POST',
           headers:{'Content-Type':'application/json'},
           body: JSON.stringify({
-            access_key: window.FSN_RESULT_EMAIL_KEY,
+            access_key: window.FSN_RESULT_EMAIL_KEYS[_k],
             subject: 'FSN \u8bc1\u4e66\u5df2\u751f\u6210\uff1a'+(name||sess.user.email)+' \u2014 \u901a\u8fc7 PASS ('+(Q_CERT_PCT||'')+'%)',
             from_name: 'SinoMed FSN',
             email: 'info@cafsn.com',
@@ -3608,6 +3613,7 @@ async function fsnUploadCert(blob, name){
           })
         });
       }catch(e){}
+      }
     }
     window.__certNotify=false;
   }catch(e){}
