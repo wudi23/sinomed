@@ -8158,6 +8158,7 @@ function pick(a){return a[rand(a.length)];}
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=rand(i+1);var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function sample(a,n){return shuffle(a).slice(0,n);}
 function nm(f){return isEN()?f.py:f.zh+'（'+f.py+'）';}   /* formula name */
+function nmZh(f){return f.zh;}function nmEn(f){return f.py;}function hnmZh(h){return h.zh;}function hnmEn(h){return h.py;}
 function hnm(h){return isEN()?h.py:h.zh+'（'+h.py+'）';}   /* herb name */
 function uniq(a){var s={},o=[];a.forEach(function(x){if(!s[x]){s[x]=1;o.push(x);}});return o;}
 
@@ -8186,10 +8187,10 @@ function fmComposition(){
     var wrong=pick(pool);
     var right=sample(f.comp,3);
     return Q({type:'方剂组成',type_en:'Composition',
-      q_zh:'下列哪味药<b>不属于</b>「'+f.zh+'」？',q_en:'Which herb is <b>NOT</b> in '+nm(f)+'?',
+      q_zh:'下列哪味药<b>不属于</b>「'+f.zh+'」？',q_en:'Which herb is <b>NOT</b> in '+nmEn(f)+'?',
       o:opts(wrong.zh,wrong.py,right.map(hn),right.map(hnE)),
       ex_zh:'「'+f.zh+'」由 '+f.comp.map(hn).join('、')+' 组成，不含'+wrong.zh+'。',
-      ex_en:nm(f)+' contains: '+f.comp.map(hnE).join(', ')+'.',
+      ex_en:nmEn(f)+' contains: '+f.comp.map(hnE).join(', ')+'.',
       link:'f_'+f.id,sig:'comp-not-'+f.id+'-'+wrong.id});
   } else { /* which group IS the composition */
     var correct=f.comp.map(hn).join('、'), correctE=f.comp.map(hnE).join(', ');
@@ -8204,9 +8205,9 @@ function fmComposition(){
     var dz=others.map(function(o){return o.comp.map(hn).join('、');});
     var de=others.map(function(o){return o.comp.map(hnE).join(', ');});
     return Q({type:'方剂组成',type_en:'Composition',
-      q_zh:'「'+f.zh+'」由下列哪组药物组成？',q_en:'Which group composes '+nm(f)+'?',
+      q_zh:'「'+f.zh+'」由下列哪组药物组成？',q_en:'Which group composes '+nmEn(f)+'?',
       o:opts(correct,correctE,dz,de),
-      ex_zh:'「'+f.zh+'」：'+correct+'。',ex_en:nm(f)+': '+correctE+'.',
+      ex_zh:'「'+f.zh+'」：'+correct+'。',ex_en:nmEn(f)+': '+correctE+'.',
       link:'f_'+f.id,sig:'comp-is-'+f.id});
   }
 }
@@ -8220,9 +8221,9 @@ function fmSource(){
   var dz=uniq(dpairs.map(function(p){return p.z;})); var de=uniq(dpairs.map(function(p){return p.e;}));
   if(dz.length<3)return null;
   return Q({type:'方剂出处',type_en:'Source',
-    q_zh:'「'+f.zh+'」出自下列哪部典籍？',q_en:'From which text is '+nm(f)+'?',
+    q_zh:'「'+f.zh+'」出自下列哪部典籍？',q_en:'From which text is '+nmEn(f)+'?',
     o:opts(f.srczh,f.srcen,dz,de),
-    ex_zh:'「'+f.zh+'」出自'+f.srczh+'。',ex_en:nm(f)+' — '+f.srcen+'.',
+    ex_zh:'「'+f.zh+'」出自'+f.srczh+'。',ex_en:nmEn(f)+' — '+f.srcen+'.',
     link:'f_'+f.id,sig:'src-'+f.id});
 }
 /* 3. sovereign (君药) */
@@ -8235,9 +8236,9 @@ function fmSovereign(){
   var dz=sample(others,Math.min(3,others.length));
   while(dz.length<3){var pool=QH.filter(function(h){return h.zh!==jun&&dz.map(function(x){return x.id;}).indexOf(h.id)<0;});var e=pick(pool);dz.push({id:e.id,zh:e.zh});}
   return Q({type:'君药辨识',type_en:'Sovereign Herb',
-    q_zh:'「'+f.zh+'」的君药是下列哪味？',q_en:'Which is the sovereign herb of '+nm(f)+'?',
+    q_zh:'「'+f.zh+'」的君药是下列哪味？',q_en:'Which is the sovereign herb of '+nmEn(f)+'?',
     o:opts(jun,junE,dz.map(function(c){return c.zh;}),dz.map(function(c){return HById[c.id]?HById[c.id].py:c.zh;})),
-    ex_zh:'「'+f.zh+'」以'+jun+'为君。',ex_en:'The sovereign herb of '+nm(f)+' is '+junE+'.',
+    ex_zh:'「'+f.zh+'」以'+jun+'为君。',ex_en:'The sovereign herb of '+nmEn(f)+' is '+junE+'.',
     link:'f_'+f.id,sig:'jun-'+f.id});
 }
 /* 4. function/formula qi-dynamic (mid) */
@@ -8250,9 +8251,9 @@ function fmFunction(){
   var dz=others.map(function(o){return o.logic;});
   var de=others.map(function(o){return o.logic_en||o.logic;});
   return Q({type:'组方要旨',type_en:'Formula Logic',
-    q_zh:'下列哪项是「'+f.zh+'」的组方要旨？',q_en:'What is the compositional logic of '+nm(f)+'?',
+    q_zh:'下列哪项是「'+f.zh+'」的组方要旨？',q_en:'What is the compositional logic of '+nmEn(f)+'?',
     o:opts(f.logic,f.logic_en||f.logic,dz,de),
-    ex_zh:'「'+f.zh+'」：'+f.logic,ex_en:nm(f)+' — '+(f.logic_en||''),
+    ex_zh:'「'+f.zh+'」：'+f.logic,ex_en:nmEn(f)+' — '+(f.logic_en||''),
     link:'f_'+f.id,sig:'logic-'+f.id});
 }
 /* 5. indication (主治 key_signs) — mid */
@@ -8267,9 +8268,9 @@ function fmIndication(){
   var dz=others.map(function(o){return o.signs.slice(0,3).join('；');});
   var de=others.map(function(o){return (o.signs_en||[]).slice(0,3).join('; ');});
   return Q({type:'主治证候',type_en:'Indication',
-    q_zh:'下列哪组脉证是「'+f.zh+'」的主治？',q_en:'Which signs indicate '+nm(f)+'?',
+    q_zh:'下列哪组脉证是「'+f.zh+'」的主治？',q_en:'Which signs indicate '+nmEn(f)+'?',
     o:opts(correct,correctE,dz,de),
-    ex_zh:'「'+f.zh+'」主症：'+correct+'。',ex_en:nm(f)+' — key signs: '+correctE+'.',
+    ex_zh:'「'+f.zh+'」主症：'+correct+'。',ex_en:nmEn(f)+' — key signs: '+correctE+'.',
     link:'f_'+f.id,sig:'ind-'+f.id});
 }
 /* 6. role 君臣佐使 — mid */
@@ -8281,7 +8282,7 @@ function fmRole(){
   var dz=roles.filter(function(r){return r!==c.role.charAt(0);}).slice(0,3);
   var RE={'君':'Sovereign','臣':'Minister','佐':'Assistant','使':'Envoy'};
   return Q({type:'君臣佐使',type_en:'Role',
-    q_zh:'「'+c.zh+'」在「'+f.zh+'」中的配伍地位是？',q_en:'What is the role of '+ce+' in '+nm(f)+'?',
+    q_zh:'「'+c.zh+'」在「'+f.zh+'」中的配伍地位是？',q_en:'What is the role of '+ce+' in '+nmEn(f)+'?',
     o:opts(c.role.charAt(0)+'药',(RE[c.role.charAt(0)]||c.role),dz.map(function(r){return r+'药';}),dz.map(function(r){return RE[r];})),
     ex_zh:'「'+c.zh+'」在此方为'+c.role+'药'+(c.why?'：'+c.why:'')+'。',
     ex_en:ce+' serves as the '+(RE[c.role.charAt(0)]||c.role)+' herb.',
@@ -8308,7 +8309,7 @@ function fmDosage(){
   var de=altF.map(function(r){return p0e+' : '+p1e+' ＝ '+r;});
   return Q({type:'剂量比例',type_en:'Dose Ratio',
     q_zh:'「'+f.zh+'」中，'+pair[0].zh+' 与 '+pair[1].zh+' 的用量比例约为？',
-    q_en:'In '+nm(f)+', the dose ratio of '+p0e+' to '+p1e+'?',
+    q_en:'In '+nmEn(f)+', the dose ratio of '+p0e+' to '+p1e+'?',
     o:opts(correct,correctE,dz,de),
     ex_zh:'「'+f.zh+'」：'+pair[0].zh+' '+pair[0].dc+'、'+pair[1].zh+' '+pair[1].dc+'，约 '+cr+'。',
     ex_en:'Ratio ≈ '+cr+'.',
@@ -8322,9 +8323,9 @@ function fmCategory(){
   for(var i=0;i<pool.length&&dz.length<3;i++){if(!seen[pool[i].catzh]){seen[pool[i].catzh]=1;dz.push(pool[i].catzh);de.push(pool[i].caten);}}
   if(dz.length<3)return null;
   return Q({type:'方剂归类',type_en:'Category',
-    q_zh:'「'+f.zh+'」属下列哪一类方？',q_en:'To which class does '+nm(f)+' belong?',
+    q_zh:'「'+f.zh+'」属下列哪一类方？',q_en:'To which class does '+nmEn(f)+' belong?',
     o:opts(f.catzh,f.caten,dz,de),
-    ex_zh:'「'+f.zh+'」归'+f.catzh+'。',ex_en:nm(f)+' — '+f.caten+'.',
+    ex_zh:'「'+f.zh+'」归'+f.catzh+'。',ex_en:nmEn(f)+' — '+f.caten+'.',
     link:'f_'+f.id,sig:'cat-'+f.id});
 }
 /* ============ HERB generators ============ */
@@ -8348,9 +8349,9 @@ function hbNature(){
   var dz=others.map(function(o){return o.nature+'；归'+o.chan.join('、')+'经';});
   var de=others.map(function(o){return o.nature_en+'; enters '+o.chan_en;});
   return Q({type:'性味归经',type_en:'Nature & Channels',
-    q_zh:'「'+h.zh+'」的性味归经是？',q_en:'Nature, flavor & channels of '+hnm(h)+'?',
+    q_zh:'「'+h.zh+'」的性味归经是？',q_en:'Nature, flavor & channels of '+hnmEn(h)+'?',
     o:opts(correct,correctE,dz,de),
-    ex_zh:'「'+h.zh+'」：'+correct+'。',ex_en:hnm(h)+': '+correctE+'.',
+    ex_zh:'「'+h.zh+'」：'+correct+'。',ex_en:hnmEn(h)+': '+correctE+'.',
     link:'h_'+h.id,sig:'nat-'+h.id});
 }
 /* 10. herb function (core herbs) */
@@ -8365,9 +8366,9 @@ function hbFunction(){
   var dz=others.map(function(o){return o.fns.join('、');});
   var de=others.map(function(o){return (o.fns_en||[]).join(', ');});
   return Q({type:'药物功效',type_en:'Herb Function',
-    q_zh:'「'+h.zh+'」的主要功效是？',q_en:'Main functions of '+hnm(h)+'?',
+    q_zh:'「'+h.zh+'」的主要功效是？',q_en:'Main functions of '+hnmEn(h)+'?',
     o:opts(correct,correctE,dz,de),
-    ex_zh:'「'+h.zh+'」：'+correct+'。',ex_en:hnm(h)+': '+correctE+'.',
+    ex_zh:'「'+h.zh+'」：'+correct+'。',ex_en:hnmEn(h)+': '+correctE+'.',
     link:'h_'+h.id,sig:'hfn-'+h.id});
 }
 /* 11. herb qi-direction */
@@ -8383,9 +8384,9 @@ function hbQi(){
   }
   if(dz.length<3)return null;
   return Q({type:'气机走向',type_en:'Qi Direction',
-    q_zh:'「'+h.zh+'」的气机走向定位是？',q_en:'Qi-dynamic positioning of '+hnm(h)+'?',
+    q_zh:'「'+h.zh+'」的气机走向定位是？',q_en:'Qi-dynamic positioning of '+hnmEn(h)+'?',
     o:opts(h.qi,h.qi_en,dz,de),
-    ex_zh:'「'+h.zh+'」：'+h.qi+'。',ex_en:hnm(h)+': '+h.qi_en+'.',
+    ex_zh:'「'+h.zh+'」：'+h.qi+'。',ex_en:hnmEn(h)+': '+h.qi_en+'.',
     link:'h_'+h.id,sig:'hqi-'+h.id});
 }
 /* ============ ADVANCED generators ============ */
@@ -8412,9 +8413,9 @@ function fmCase(){
       return Q({type:'病案辨证选方',type_en:'Case → Formula',
         q_zh:'患者见：'+keys.join('；')+'。辨证之下，最宜用下列哪方？',
         q_en:'Patient presents: '+keysEn.join('; ')+'. Which formula fits best?',
-        o:opts(nm(f),nm(f),dz.map(nm),dz.map(nm)),
+        o:opts(f.zh,f.py,dz.map(function(x){return x.zh;}),dz.map(function(x){return x.py;})),
         ex_zh:'当选「'+f.zh+'」。病机：'+f.qi+'。',
-        ex_en:'Answer: '+nm(f)+(f.qi_en?'. '+f.qi_en:'.'),
+        ex_en:'Answer: '+nmEn(f)+(f.qi_en?'. '+f.qi_en:'.'),
         link:'f_'+f.id,sig:'case-'+f.id});
     }
   }
@@ -8448,19 +8449,18 @@ function fmDifferentiate(){
 /* 14. modifications (加减) */
 function fmModify(){
   var cand=QFa().filter(function(x){return x.mods.length;});
-  if(isEN())cand=cand.filter(function(x){return x.mods.some(function(m){return m.cond_en&&m.add_en;});});
+  cand=cand.filter(function(x){return x.mods.some(function(m){return m.cond_en&&m.add_en;});});
   if(!cand.length)return null;
-  var f=pick(cand); var msrc=isEN()?f.mods.filter(function(m){return m.cond_en&&m.add_en;}):f.mods;
+  var f=pick(cand); var msrc=f.mods.filter(function(m){return m.cond_en&&m.add_en;});
   if(!msrc.length)return null;
   var m=pick(msrc); if(!m.add)return null;
-  var allAdds=[],allAddsE=[];QF.forEach(function(x){x.mods.forEach(function(mm){if(mm.add){allAdds.push(mm.add);if(mm.add_en)allAddsE.push(mm.add_en);}});});
-  var dz=sample(uniq(allAdds).filter(function(a){return a!==m.add;}),3);
-  var de=isEN()?sample(uniq(allAddsE).filter(function(a){return a!==m.add_en;}),3):dz;
-  if(dz.length<3)return null;
-  if(isEN()&&de.length<3)return null;
+  var seen={},pairs=[];QF.forEach(function(x){x.mods.forEach(function(mm){if(mm.add&&mm.add!==m.add&&mm.add_en&&!seen[mm.add]){seen[mm.add]=1;pairs.push({zh:mm.add,en:mm.add_en});}});});
+  var dp=sample(pairs,3);
+  if(dp.length<3)return null;
+  var dz=dp.map(function(o){return o.zh;}), de=dp.map(function(o){return o.en;});
   return Q({type:'加减变化',type_en:'Modification',
     q_zh:'「'+f.zh+'」证兼见「'+m.cond+'」，原方宜如何加减？',
-    q_en:'For '+nm(f)+' with "'+m.cond_en+'", how to modify?',
+    q_en:'For '+nmEn(f)+' with "'+m.cond_en+'", how to modify?',
     o:opts(m.add,m.add_en,dz,de),
     ex_zh:'兼「'+m.cond+'」→ '+m.add+'。',ex_en:'→ '+m.add_en+'.',
     link:'f_'+f.id,sig:'mod-'+f.id+'-'+m.cond.slice(0,6)});
@@ -8471,29 +8471,28 @@ function fmText(){
   if(!cand.length)return null;
   var f=pick(cand);
   var blanked=f.line.split(f.zh).join('_____');
-  var dz=sample(QFa().filter(function(x){return x.id!==f.id;}),3).map(nm);
+  var dzf=sample(QFa().filter(function(x){return x.id!==f.id;}),3);
   return Q({type:'方证原文对应',type_en:'Text → Formula',
     q_zh:'原文：「'+blanked+'」空缺处应为？',
     q_en:'Classical text (blank = which formula?): 「'+blanked+'」',
-    o:opts(nm(f),nm(f),dz,dz),
-    ex_zh:'原文出「'+f.zh+'」（'+f.srczh+'）。',ex_en:'Answer: '+nm(f)+' — '+f.srcen+'.',
+    o:opts(f.zh,f.py,dzf.map(function(x){return x.zh;}),dzf.map(function(x){return x.py;})),
+    ex_zh:'原文出「'+f.zh+'」（'+f.srczh+'）。',ex_en:'Answer: '+nmEn(f)+' — '+f.srcen+'.',
     link:'f_'+f.id,sig:'text-'+f.id});
 }
 /* 16. herb pair meaning (药对) */
 function fmHerbPair(){
   var cand=QH.filter(function(x){return x.tier==='core'&&x.pairs.length;});
-  if(isEN())cand=cand.filter(function(x){return x.pairs.some(function(p){return p.makes_en;});});
+  cand=cand.filter(function(x){return x.pairs.some(function(p){return p.makes_en;});});
   if(!cand.length)return null;
   var h=pick(cand);
-  var psrc=isEN()?h.pairs.filter(function(p){return p.makes_en;}):h.pairs;
+  var psrc=h.pairs.filter(function(p){return p.makes_en;});
   if(!psrc.length)return null;
   var p=pick(psrc); if(!p.makes)return null;
   var wpy=p.withpy||p['with'];
-  var allMakes=[],allMakesE=[];QH.forEach(function(x){(x.pairs||[]).forEach(function(pp){if(pp.makes){allMakes.push(pp.makes);if(pp.makes_en)allMakesE.push(pp.makes_en);}});});
-  var dz=sample(uniq(allMakes).filter(function(m){return m!==p.makes;}),3);
-  var de=isEN()?sample(uniq(allMakesE).filter(function(m){return m!==p.makes_en;}),3):dz;
-  if(dz.length<3)return null;
-  if(isEN()&&de.length<3)return null;
+  var seen={},pairs=[];QH.forEach(function(x){(x.pairs||[]).forEach(function(pp){if(pp.makes&&pp.makes!==p.makes&&pp.makes_en&&!seen[pp.makes]){seen[pp.makes]=1;pairs.push({zh:pp.makes,en:pp.makes_en});}});});
+  var dp=sample(pairs,3);
+  if(dp.length<3)return null;
+  var dz=dp.map(function(o){return o.zh;}), de=dp.map(function(o){return o.en;});
   return Q({type:'药对配伍',type_en:'Herb Pair',
     q_zh:'「'+h.zh+'」配「'+p['with']+'」，其配伍意义为？',
     q_en:'The pairing of '+h.py+' with '+wpy+' achieves?',
